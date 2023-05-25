@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <GLFW/glfw3.h>
 
 using namespace std;
 
@@ -178,7 +179,7 @@ int main()
 
     Perceptron perceptron(numInputs, numOutputs, learningRate);
     perceptron.train(trainingSet, labels, numEpochs);
-
+    printLabels(labels);
     std::vector<std::vector<double>> testSet = readCSV("test_set.csv", numInputs);
 
     for (const auto &inputs : testSet)
@@ -198,6 +199,61 @@ int main()
 
         std::cout << "Predicted Digit: " << predictedDigit << std::endl;
     }
+    if (!glfwInit())
+        return false;
+
+    /* Create a windowed mode window and its OpenGL context */
+    int wWidth = 500;
+    int wHeight = 700;
+    int sX = wWidth / 5;
+    int sY = wHeight / 7;
+    auto window = glfwCreateWindow(wWidth, wHeight, "TSP", NULL, NULL);
+    if (!window)
+    {
+        glfwTerminate();
+        return false;
+    }
+
+    /* Make the window's context current */
+    glfwMakeContextCurrent(window);
+
+    /* Extra configurations */
+    glClearColor(0, 0, 0, 1);
+    //glfwSetWindowUserPointer(window, this);
+    //glfwSetKeyCallback(window, keyCallback);
+    //glfwSetMouseButtonCallback(window, mouseCallback);
+
+    int testN = 0;
+    while (!glfwWindowShouldClose(window))
+    {
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        for (int k = 0; k < testSet[testN].size(); k++)
+        {
+            int i = k % 5;
+            int j = k / 5;
+                if (testSet[testN][k])
+                {
+                    glBegin(GL_QUADS);
+                    glColor3f(1, 1, 1);
+                    int tlx = i * sX;
+                    int tly = j * sY;
+                    auto openGlx = [wWidth](float x) {return 2.0f * x / (float)wWidth - 1; };
+                    auto openGly = [wHeight](float y) {return -(2.0f * y / (float)wHeight - 1); };
+                    glVertex2f(openGlx(tlx), openGly(tly));
+                    glVertex2f(openGlx(tlx + sX), openGly(tly));
+                    glVertex2f(openGlx(tlx + sX), openGly(tly + sY));
+                    glVertex2f(openGlx(tlx), openGly(tly + sY));
+                    glEnd();
+                }
+        }
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+        std::cin >> testN;
+        testN = std::min(testN, (int)testSet.size() - 1);
+        testN = std::max(testN, 0);
+    }
+    glfwTerminate();
 
     return 0;
 }
